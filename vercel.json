@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/spotify-callback.js": {
+      "maxDuration": 30
+    }
+  }
+}
