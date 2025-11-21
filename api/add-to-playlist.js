@@ -18,23 +18,18 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing trackUri or playlistId' });
     }
 
-    // Your Spotify credentials
-    const CLIENT_ID = 'ef6658e9c39d405099a8c4d7eee3c1a5';
-    const CLIENT_SECRET = 'c8331c163eba4f8fa5c4f06737a22e3a';
+    // CRITICAL: You need a user's access token stored somewhere
+    // For now, let's return an error that guides you to get OAuth token
     
-    // For now, use client credentials (you'll need to get user token via OAuth later)
-    const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')
-      },
-      body: 'grant_type=client_credentials'
-    });
-
-    const tokenData = await tokenResponse.json();
-    if (!tokenData.access_token) {
-      return res.status(500).json({ error: 'Failed to get access token' });
+    // TODO: Replace this with your actual stored user token
+    const USER_ACCESS_TOKEN = process.env.SPOTIFY_USER_TOKEN || null;
+    
+    if (!USER_ACCESS_TOKEN) {
+      return res.status(401).json({ 
+        error: 'User authorization required', 
+        message: 'Please complete OAuth flow first to get user access token',
+        authUrl: `https://accounts.spotify.com/authorize?client_id=ef6658e9c39d405099a8c4d7eee3c1a5&response_type=code&redirect_uri=https://my-spotify-o-auth-flow.vercel.app/api/spotify-callback&scope=playlist-modify-public%20playlist-modify-private`
+      });
     }
 
     // Extract track ID and format
@@ -51,11 +46,11 @@ export default async function handler(req, res) {
 
     const trackUriFormatted = `spotify:track:${trackId}`;
 
-    // Add track to playlist
+    // Add track to playlist using USER token
     const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
+        'Authorization': `Bearer ${USER_ACCESS_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
